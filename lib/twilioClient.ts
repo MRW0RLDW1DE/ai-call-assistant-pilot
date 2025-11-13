@@ -1,25 +1,34 @@
 import { CallRequest } from './types';
+import twilio from 'twilio';
 
 /**
- * TODO: Implement Twilio outbound call logic here.
+ * Start an outbound call via Twilio.
+ * Reads credentials from environment variables:
+ * - TWILIO_ACCOUNT_SID
+ * - TWILIO_AUTH_TOKEN
+ * - TWILIO_PHONE_NUMBER
  *
- * Required environment variables:
- * - TWILIO_ACCOUNT_SID: Your Twilio Account SID
- * - TWILIO_AUTH_TOKEN: Your Twilio Auth Token
- * - TWILIO_PHONE_NUMBER: Your Twilio phone number used to make calls
- *
- * This function should initiate a call using Twilio's REST API and
- * handle any Twilio-specific logic. For now, this is a placeholder.
+ * It posts to your voice and status webhook endpoints, which should be
+ * configured in your environment (NEXT_PUBLIC_BASE_URL) or on Twilio console.
  */
 export async function startOutboundCall(call: CallRequest): Promise<void> {
-  // Placeholder: log the call details. Replace with Twilio SDK integration.
-  console.log('TODO: implement Twilio outbound call here', call);
-
-  // Example integration (commented out):
-  // const client = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!);
-  // await client.calls.create({
-  //   from: process.env.TWILIO_PHONE_NUMBER!,
-  //   to: call.phoneNumber,
-  //   url: 'https://your-app-url/api/telephony/voice'
-  // });
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+  if (!accountSid || !authToken || !fromNumber) {
+    console.warn('Twilio credentials are missing; skipping outbound call.');
+    return;
+  }
+  const client = twilio(accountSid, authToken);
+  try {
+    await client.calls.create({
+      from: fromNumber,
+      to: call.phoneNumber,
+      url: `${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/telephony/voice`,
+      statusCallback: `${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/telephony/status`,
+      statusCallbackEvent: ['initiated', 'ringing', 'completed']
+    });
+  } catch (error) {
+    console.error('Error initiating Twilio call', error);
+  }
 }
