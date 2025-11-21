@@ -3,30 +3,30 @@ import { useState } from 'react';
 
 export default function NewCallPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [objective, setObjective] = useState('');
-  const [context, setContext] = useState('');
+  const [scenario, setScenario] = useState('');
   const [message, setMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMessage(null);
     try {
-      const res = await fetch('/api/calls', {
+      const res = await fetch('/api/call/start', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phoneNumber, objective, context }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phoneNumber, scenario }),
       });
       const data = await res.json();
       if (res.ok) {
-        setMessage('Call created successfully');
+        setMessage('Call initiated successfully');
         setPhoneNumber('');
-        setObjective('');
-        setContext('');
+        setScenario('');
       } else {
-        setMessage(data.error || 'Error creating call');
+        setMessage(data.error || 'Error initiating call');
       }
     } catch (err) {
-      setMessage('Error creating call');
+      setMessage('Error initiating call');
     }
   };
 
@@ -37,32 +37,30 @@ export default function NewCallPage() {
         <div>
           <label className="block font-medium">Phone Number</label>
           <input
-            type="tel"
+            type="text"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
-            className="border p-2 w-full"
+            className="border border-gray-300 rounded px-2 py-1 w-full"
+            placeholder="Enter phone number"
             required
           />
         </div>
         <div>
-          <label className="block font-medium">Objective</label>
-          <textarea
-            value={objective}
-            onChange={(e) => setObjective(e.target.value)}
-            className="border p-2 w-full"
+          <label className="block font-medium">Scenario</label>
+          <input
+            type="text"
+            value={scenario}
+            onChange={(e) => setScenario(e.target.value)}
+            className="border border-gray-300 rounded px-2 py-1 w-full"
+            placeholder="Enter call scenario"
             required
           />
         </div>
-        <div>
-          <label className="block font-medium">Context</label>
-          <textarea
-            value={context}
-            onChange={(e) => setContext(e.target.value)}
-            className="border p-2 w-full"
-          />
-        </div>
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2">
-          Create Call
+        <button
+          type="submit"
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Start Call
         </button>
       </form>
       {message && <p className="mt-4">{message}</p>}
